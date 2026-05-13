@@ -64,6 +64,16 @@ export function VehicleCard({ vehicle, userPos, isNew, onClick }: Props) {
             <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 15, color: 'var(--text-1)', lineHeight: 1.2 }}>
               {vehicle.year} {vehicle.make} {vehicle.model}
             </div>
+            {vehicle.description && (
+              <div style={{
+                fontFamily: 'DM Mono', fontSize: 10, color: 'var(--text-3)',
+                marginTop: 3, marginBottom: 2,
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                maxWidth: '100%',
+              }}>
+                {vehicle.description}
+              </div>
+            )}
             <div style={{ fontFamily: 'DM Sans', fontSize: 11.5, color: 'var(--text-2)', marginTop: 3, display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
               <span>{vehicle.fuel_type || '—'}</span>
               <span style={{ color: 'var(--border-mid)' }}>·</span>
