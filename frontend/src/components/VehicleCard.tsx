@@ -73,7 +73,17 @@ export function VehicleCard({ vehicle, userPos, isNew, onClick }: Props) {
                 <span style={{ color: 'var(--text-1)', fontFamily: 'DM Mono', fontSize: 11 }}>{ccLabel}</span>
               </>}
               <span style={{ color: 'var(--border-mid)' }}>·</span>
-              <span>{vehicle.location?.split(',')[0] || '—'}</span>
+              <a
+                href={vehicle.location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(vehicle.location)}` : undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                style={{ color: 'inherit', textDecoration: 'none' }}
+                onMouseEnter={e => (e.currentTarget.style.textDecoration = 'underline')}
+                onMouseLeave={e => (e.currentTarget.style.textDecoration = 'none')}
+              >
+                {vehicle.location?.split(',')[0] || '—'}
+              </a>
               {km !== null && (
                 <span style={{
                   fontFamily: 'DM Mono', fontSize: 10, color: 'var(--accent)',
