@@ -8,7 +8,6 @@ const LABELS: Record<keyof ScoringWeights, string> = {
   price:       'Price',
   mileage:     'Mileage',
   km_per_year: 'km/yr Ratio',
-  power:       'Power',
   curb_weight: 'Weight',
   engine:      'Engine (small)',
   maintenance: 'Maintenance (AI)',
@@ -21,7 +20,7 @@ const sectionLabel: React.CSSProperties = {
 
 export function ScoringConfig({ onRescore }: Props) {
   const [weights, setWeights] = useState<ScoringWeights>({
-    price: 25, mileage: 15, km_per_year: 15, power: 10, curb_weight: 15, engine: 10, maintenance: 10,
+    price: 30, mileage: 20, km_per_year: 20, curb_weight: 15, engine: 10, maintenance: 5,
   })
   const [saving, setSaving] = useState(false)
   const [rescoring, setRescoring] = useState(false)

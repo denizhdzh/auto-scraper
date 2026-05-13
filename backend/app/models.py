@@ -53,13 +53,12 @@ class ScoredVehicle(VehicleSpec):
 
 
 class ScoringWeights(BaseModel):
-    price: float = 25.0
-    mileage: float = 15.0
-    km_per_year: float = 15.0
-    power: float = 10.0
+    price: float = 30.0
+    mileage: float = 20.0
+    km_per_year: float = 20.0
     curb_weight: float = 15.0
     engine: float = 10.0
-    maintenance: float = 10.0
+    maintenance: float = 5.0
 
 
 class ScrapeJob(BaseModel):

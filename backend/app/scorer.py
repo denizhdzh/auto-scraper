@@ -162,13 +162,11 @@ def score_vehicle(
 
     prices   = [x.price    for x in pool if x.price   > 0]
     miles    = [x.mileage  for x in pool if x.mileage > 0]
-    powers   = [x.power_hp for x in pool if x.power_hp]
     wts      = [x.curb_weight_kg for x in pool if x.curb_weight_kg]
     ccs      = [x.engine_cc for x in pool if x.engine_cc]
 
     p_lo, p_hi   = _bounds(prices)
     m_lo, m_hi   = _bounds(miles)
-    pw_lo, pw_hi = _bounds(powers)
     wt_lo, wt_hi = _bounds(wts)
     cc_lo, cc_hi = _bounds(ccs)
 
@@ -178,7 +176,6 @@ def score_vehicle(
         "price":        _norm(v.price,         p_lo,  p_hi,  invert=True),
         "mileage":      _norm(v.mileage,        m_lo,  m_hi,  invert=True),
         "km_per_year":  _score_km_per_year(v.mileage, v.year),
-        "power":        _norm(v.power_hp,       pw_lo, pw_hi, invert=False),
         "curb_weight":  _norm(v.curb_weight_kg, wt_lo, wt_hi, invert=True),
         "engine":       _norm(v.engine_cc,      cc_lo, cc_hi, invert=True),
         "maintenance":  maintenance_score,
@@ -188,7 +185,6 @@ def score_vehicle(
         "price":       weights.price,
         "mileage":     weights.mileage,
         "km_per_year": weights.km_per_year,
-        "power":       weights.power,
         "curb_weight": weights.curb_weight,
         "engine":      weights.engine,
         "maintenance": weights.maintenance,
@@ -200,7 +196,6 @@ def score_vehicle(
         "price":       _explain_price(bd["price"], v.price, p_lo, p_hi),
         "mileage":     _explain_mileage(bd["mileage"], v.mileage),
         "km_per_year": _explain_km_per_year(bd["km_per_year"], v.mileage, v.year),
-        "power":       _explain_power(bd["power"], v.power_hp),
         "curb_weight": _explain_weight(bd["curb_weight"], v.curb_weight_kg, v.fuel_type),
         "engine":      _explain_engine(bd["engine"], v.engine_cc),
         "maintenance": _explain_maintenance(bd["maintenance"], v.ai_analysis),

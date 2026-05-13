@@ -50,7 +50,6 @@ export interface ScoringWeights {
   price: number
   mileage: number
   km_per_year: number
-  power: number
   curb_weight: number
   engine: number
   maintenance: number
