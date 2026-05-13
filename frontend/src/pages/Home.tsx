@@ -110,15 +110,8 @@ export function Home() {
   const [sort, setSort] = useState<SortKey>('score')
   const [searchOpen, setSearchOpen] = useState(false)
   const [selected, setSelected] = useState<ScoredVehicle | null>(null)
-  const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null)
+  const userPos = { lat: 51.8426, lng: 5.8546 } // Nijmegen
   const isMobile = useIsMobile()
-
-  useEffect(() => {
-    navigator.geolocation?.getCurrentPosition(
-      pos => setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => {},
-    )
-  }, [])
 
   const load = useCallback(async () => {
     setLoading(true)
