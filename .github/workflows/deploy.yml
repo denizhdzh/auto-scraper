@@ -1,0 +1,42 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - 'backend/data/store.json'  # redeploy when results update
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build frontend
+        working-directory: frontend
+        env:
+          VITE_RESULTS_URL: https://raw.githubusercontent.com/${{ github.repository }}/main/backend/data/store.json
+        run: |
+          npm install
+          npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist
+
+      - uses: actions/deploy-pages@v4
+        id: deployment

@@ -1,0 +1,16 @@
+# Python
+backend/.venv/
+backend/__pycache__/
+backend/app/__pycache__/
+**/__pycache__/
+*.pyc
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Secrets
+backend/.env
+
+# Data is intentionally committed (results from Actions)
+# backend/data/store.json  ← do NOT ignore this

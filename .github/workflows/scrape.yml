@@ -1,0 +1,121 @@
+name: Scrape Cars
+
+on:
+  workflow_dispatch:
+    inputs:
+      make:
+        description: 'Make (e.g. mazda) — leave empty for any'
+        required: false
+        default: ''
+      model:
+        description: 'Model (e.g. mx-5) — leave empty for any'
+        required: false
+        default: ''
+      price_min:
+        description: 'Min price (€)'
+        required: false
+        default: ''
+      price_max:
+        description: 'Max price (€)'
+        required: false
+        default: '25000'
+      mileage_max:
+        description: 'Max mileage (km)'
+        required: false
+        default: '150000'
+      year_min:
+        description: 'Min year'
+        required: false
+        default: '2010'
+      year_max:
+        description: 'Max year'
+        required: false
+        default: ''
+      power_min:
+        description: 'Min power (HP)'
+        required: false
+        default: ''
+      fuel_type:
+        description: 'Fuel (Petrol / Diesel / Electric / Hybrid)'
+        required: false
+        default: ''
+      body_type:
+        description: 'Body types comma-separated (e.g. convertible,coupe)'
+        required: false
+        default: ''
+      country:
+        description: 'Countries comma-separated (e.g. NL,D)'
+        required: false
+        default: 'NL'
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python deps
+        working-directory: backend
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright browsers
+        run: playwright install chromium --with-deps
+
+      - name: Build params
+        run: |
+          python3 - <<'EOF'
+          import json, os
+          def maybe(key, cast=str):
+              v = os.environ.get(key, '').strip()
+              return cast(v) if v else None
+          p = {}
+          if maybe('MAKE'):      p['make']        = maybe('MAKE')
+          if maybe('MODEL'):     p['model']       = maybe('MODEL')
+          if maybe('PRICE_MIN'): p['price_min']   = maybe('PRICE_MIN', int)
+          if maybe('PRICE_MAX'): p['price_max']   = maybe('PRICE_MAX', int)
+          if maybe('KM_MAX'):    p['mileage_max'] = maybe('KM_MAX', int)
+          if maybe('YEAR_MIN'):  p['year_min']    = maybe('YEAR_MIN', int)
+          if maybe('YEAR_MAX'):  p['year_max']    = maybe('YEAR_MAX', int)
+          if maybe('POWER_MIN'): p['power_min']   = maybe('POWER_MIN', int)
+          if maybe('FUEL'):      p['fuel_type']   = maybe('FUEL')
+          if maybe('BODY'):      p['body_type']   = maybe('BODY')
+          if maybe('COUNTRY'):   p['country']     = maybe('COUNTRY')
+          with open('/tmp/params.json', 'w') as f:
+              json.dump(p, f)
+          print('params:', json.dumps(p, indent=2))
+          EOF
+        env:
+          MAKE:      ${{ inputs.make }}
+          MODEL:     ${{ inputs.model }}
+          PRICE_MIN: ${{ inputs.price_min }}
+          PRICE_MAX: ${{ inputs.price_max }}
+          KM_MAX:    ${{ inputs.mileage_max }}
+          YEAR_MIN:  ${{ inputs.year_min }}
+          YEAR_MAX:  ${{ inputs.year_max }}
+          POWER_MIN: ${{ inputs.power_min }}
+          FUEL:      ${{ inputs.fuel_type }}
+          BODY:      ${{ inputs.body_type }}
+          COUNTRY:   ${{ inputs.country }}
+
+      - name: Run scraper
+        working-directory: backend
+        env:
+          SCRAPE_PARAMS: ${{ '' }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          export SCRAPE_PARAMS="$(cat /tmp/params.json)"
+          python run_scrape.py
+
+      - name: Commit results
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add backend/data/store.json
+          git diff --staged --quiet && echo "No changes" || (git commit -m "scrape: update results [skip ci]" && git push)

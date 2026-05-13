@@ -1,0 +1,110 @@
+name: Nightly MX-5 Watch
+
+on:
+  schedule:
+    - cron: '0 10 * * *'   # 12:00 CEST / 11:00 CET (Amsterdam)
+  workflow_dispatch:
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Save previous listing URLs
+        run: |
+          python3 - <<'EOF'
+          import json, pathlib
+          f = pathlib.Path("backend/data/store.json")
+          urls = []
+          if f.exists():
+              store = json.loads(f.read_text())
+              urls = [v["listing_url"] for v in store.get("vehicles", {}).values()]
+          pathlib.Path("/tmp/prev_urls.json").write_text(json.dumps(urls))
+          print(f"Previous: {len(urls)} listings")
+          EOF
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install deps
+        working-directory: backend
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright
+        run: playwright install chromium --with-deps
+
+      - name: Run scraper (analyze ALL — few cars expected)
+        working-directory: backend
+        env:
+          SCRAPE_PARAMS: '{"make":"mazda","model":"mx-5","price_max":30000,"mileage_max":150000,"year_min":2015,"country":"NL,D,B"}'
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANALYZE_TOP_N: '100'
+        run: python run_scrape.py
+
+      - name: Check new listings & notify
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python3 - <<'EOF'
+          import json, urllib.request, pathlib, os
+
+          prev = set(json.loads(pathlib.Path("/tmp/prev_urls.json").read_text()))
+          store = json.loads(pathlib.Path("backend/data/store.json").read_text())
+          vehicles = list(store.get("vehicles", {}).values())
+
+          new_ones = [v for v in vehicles if v["listing_url"] not in prev]
+          new_ones.sort(key=lambda v: v.get("score", 0), reverse=True)
+          print(f"New: {len(new_ones)} / {len(vehicles)} total")
+
+          if not new_ones:
+              print("Nothing new — no notification")
+          else:
+              repo = os.environ.get("GITHUB_REPOSITORY", "")
+              owner = repo.split("/")[0] if "/" in repo else ""
+              repo_name = repo.split("/")[1] if "/" in repo else ""
+              pages_url = f"https://{owner}.github.io/{repo_name}" if owner else ""
+
+              best = new_ones[0]
+              price = f"€{best['price']:,.0f}"
+              km    = f"{best['mileage']:,} km"
+              score = f"{best['score']:.0f}"
+              year  = best['year']
+
+              title = f"🚗 {len(new_ones)} new MX-5{'s' if len(new_ones) > 1 else ''} on AutoScout!"
+              lines = [f"{year} {best['make']} {best['model']} — {price}, {km} (score {score})"]
+              if best.get("ai_analysis"):
+                  lines.append(best["ai_analysis"])
+              if len(new_ones) > 1:
+                  lines.append(f"+ {len(new_ones)-1} more new listing{'s' if len(new_ones)>2 else ''}")
+              if pages_url:
+                  lines.append(pages_url)
+
+              body = "\n".join(lines)
+              topic = "mx5-deniz-1429-nijmegen"
+
+              req = urllib.request.Request(
+                  f"https://ntfy.sh/{topic}",
+                  data=body.encode(),
+                  headers={
+                      "Title": title,
+                      "Priority": "high",
+                      "Tags": "red_car",
+                      "Click": pages_url or best["listing_url"],
+                  },
+                  method="POST",
+              )
+              urllib.request.urlopen(req)
+              print(f"Notified ntfy: {title}")
+          EOF
+
+      - name: Commit results
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add backend/data/store.json
+          git diff --staged --quiet && echo "No changes" || (git commit -m "nightly: MX-5 update [skip ci]" && git push)
