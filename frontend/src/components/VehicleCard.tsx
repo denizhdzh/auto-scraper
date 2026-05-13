@@ -28,6 +28,12 @@ function Stat({ value, label, accent }: { value: string; label: string; accent?:
   )
 }
 
+function cleanDescription(raw: string): string {
+  const firstLine = raw.split(/<br\s*\/?>/i)[0]
+  const text = firstLine.replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim()
+  return text
+}
+
 export function VehicleCard({ vehicle, userPos, isNew, onClick }: Props) {
   const [hovered, setHovered] = useState(false)
   const img = vehicle.image_urls?.[0]
@@ -71,7 +77,7 @@ export function VehicleCard({ vehicle, userPos, isNew, onClick }: Props) {
                 whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                 maxWidth: '100%',
               }}>
-                {vehicle.description}
+                {cleanDescription(vehicle.description)}
               </div>
             )}
             <div style={{ fontFamily: 'DM Sans', fontSize: 11.5, color: 'var(--text-2)', marginTop: 3, display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
