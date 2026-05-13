@@ -145,7 +145,7 @@ export function Home() {
           color: 'var(--text-1)', letterSpacing: '0.25em', textTransform: 'uppercase',
           flex: 1, whiteSpace: 'nowrap',
         }}>
-          CARZONE
+          MIATA
         </span>
 
         {!isMobile && (
