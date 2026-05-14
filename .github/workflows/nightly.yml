@@ -75,7 +75,7 @@ jobs:
               score = f"{best['score']:.0f}"
               year  = best['year']
 
-              title = f"🚗 {len(new_ones)} new MX-5{'s' if len(new_ones) > 1 else ''} on AutoScout!"
+              title = f"{len(new_ones)} new MX-5{'s' if len(new_ones) > 1 else ''} on AutoScout!"
               lines = [f"{year} {best['make']} {best['model']} — {price}, {km} (score {score})"]
               if best.get("ai_analysis"):
                   lines.append(best["ai_analysis"])
