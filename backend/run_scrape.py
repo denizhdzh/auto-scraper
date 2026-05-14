@@ -41,6 +41,19 @@ async def main():
     vehicles = await analyze_vehicles(vehicles, top_n=top_n)
     scored = score_all(vehicles, weights)
 
+    # Load previous store to preserve scraped_at for existing listings
+    out = Path(__file__).parent / "data" / "store.json"
+    prev_scraped_at: dict[str, str] = {}
+    if out.exists():
+        try:
+            prev = json.loads(out.read_text())
+            for v in prev.get("vehicles", {}).values():
+                if v.get("listing_url") and v.get("scraped_at"):
+                    prev_scraped_at[v["listing_url"]] = v["scraped_at"]
+        except Exception:
+            pass
+
+    now = datetime.now(timezone.utc).isoformat()
     store: dict[str, dict] = {}
     seen: set[str] = set()
     for vehicle, score, breakdown, explanations in scored:
@@ -55,11 +68,10 @@ async def main():
             "score_breakdown": breakdown,
             "score_explanations": explanations,
             "road_tax_estimate": estimate_road_tax_nl(vehicle.curb_weight_kg, vehicle.fuel_type),
-            "scraped_at": datetime.now(timezone.utc).isoformat(),
+            "scraped_at": prev_scraped_at.get(vehicle.listing_url, now),
         })
         store[doc_id] = data
 
-    out = Path(__file__).parent / "data" / "store.json"
     out.parent.mkdir(exist_ok=True)
     with open(out, "w", encoding="utf-8") as f:
         json.dump({"vehicles": store, "weights": {}}, f, ensure_ascii=False)
