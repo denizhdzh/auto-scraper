@@ -41,7 +41,7 @@ jobs:
       - name: Run scraper (analyze ALL — few cars expected)
         working-directory: backend
         env:
-          SCRAPE_PARAMS: '{"make":"mazda","model":"mx-5","price_max":30000,"mileage_max":150000,"year_min":2015,"country":"NL,D,B"}'
+          SCRAPE_PARAMS: '{"make":"mazda","model":"mx-5","price_max":25000,"mileage_max":120000,"year_min":2015,"country":"NL"}'
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ANALYZE_TOP_N: '100'
         run: python run_scrape.py
